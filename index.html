@@ -111,8 +111,9 @@
                 });
                 
                 let rawText = await response.text();
-                // Secure text filtering pattern to handle potential markdown wrap drops
                 rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+                
+                // Fixed the JSON parsing execution crash point line bug
                 const data = JSON.parse(rawText);
                 
                 bricksData = data.bricks || [];

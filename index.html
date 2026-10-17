@@ -20,7 +20,7 @@
         .nav-btn { background: #3a3a3a; color: white; width: 48%; padding: 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
         .nav-btn:hover { background: #4a4a4a; }
         #status { color: #2ecc71; font-size: 13px; text-align: center; font-weight: 500; margin-top: 5px; }
-        #step-counter { text-align: center; font-size: 18px; font-weight: bold; color: #f4d03f; }
+        #step-counter { text-align: center; font-size: 18px; font-weight: bold; color: #f4d03f; margin-bottom: 5px; }
         #part-info { font-size: 12px; color: #aaa; text-align: center; min-height: 16px; margin-bottom: 5px; }
     </style>
 </head>
@@ -54,7 +54,7 @@
     <div id="canvas-container"></div>
 
     <script>
-        const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/kz9inb66atkv9ohtn2hlvwzjeul19swh";
+        const MAKE_WEBHOOK_URL = "https://make.com";
 
         let scene, camera, renderer, bricksData = [], currentStep = 0, spawnedBricks = [];
 
@@ -112,8 +112,6 @@
                 
                 let rawText = await response.text();
                 rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-                
-                // Fixed the JSON parsing execution crash point line bug
                 const data = JSON.parse(rawText);
                 
                 bricksData = data.bricks || [];
@@ -192,8 +190,8 @@
                 document.getElementById('part-info').innerText = `Current Part: ${cur.width}x${cur.depth} ${cur.type.toUpperCase()}`;
             }
         }
+
         function nextStep() { if(currentStep < bricksData.length) { currentStep++; renderCurrentSteps(); } }
-        function prevStep() { if(currentStep > 1) { currentStep--; renderCurrentSteps(); } }
 
-        window.onload = init3D;
-
+    
+    

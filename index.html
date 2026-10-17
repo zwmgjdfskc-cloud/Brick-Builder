@@ -7,19 +7,19 @@
     <script async src="https://googlesyndication.com" crossorigin="anonymous"></script>
     <script src="https://cloudflare.com"></script>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: white; display: flex; height: 100vh; overflow: hidden; }
-        #sidebar { width: 360px; background: #1e1e1e; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.6); z-index: 10; justify-content: space-between; box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: white; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
+        #sidebar { width: 360px; min-width: 360px; background: #1e1e1e; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.6); z-index: 10; justify-content: space-between; box-sizing: border-box; height: 100vh; }
         #top-content { display: flex; flex-direction: column; gap: 12px; }
-        #canvas-container { flex: 1; position: relative; }
+        #canvas-container { flex-grow: 1; height: 100vh; background-color: #111; position: relative; width: calc(100vw - 360px); }
         h1 { font-size: 22px; color: #f4d03f; margin: 0; letter-spacing: 0.5px; }
         textarea { width: 100%; height: 110px; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 6px; padding: 12px; box-sizing: border-box; resize: none; font-size: 14px; }
         button { background: #f4d03f; color: #111; border: none; padding: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 15px; transition: 0.2s; width: 100%; }
         button:hover { background: #f1c40f; }
         .ad-container { background: #111; border: 1px dashed #333; border-radius: 6px; padding: 10px; text-align: center; color: #555; font-size: 11px; min-height: 250px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin: 10px 0; }
         #controls { display: flex; justify-content: space-between; padding-top: 10px; }
-        .nav-btn { background: #3a3a3a; color: white; width: 48%; padding: 12px; }
+        .nav-btn { background: #3a3a3a; color: white; width: 48%; padding: 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
         .nav-btn:hover { background: #4a4a4a; }
-        #status { color: #2ecc71; font-size: 13px; text-align: center; font-weight: 500; }
+        #status { color: #2ecc71; font-size: 13px; text-align: center; font-weight: 500; margin-top: 5px; }
         #step-counter { text-align: center; font-size: 18px; font-weight: bold; color: #f4d03f; }
         #part-info { font-size: 12px; color: #aaa; text-align: center; min-height: 16px; margin-bottom: 5px; }
     </style>
@@ -54,7 +54,7 @@
     <div id="canvas-container"></div>
 
     <script>
-        // --- ⚠️ PASTE YOUR MAKE.COM WEBHOOK URL INSIDE THE QUOTES BELOW ⚠️ ---
+        // --- ⚠️ MAKE SURE YOUR WEBHOOK URL IS CORRECT HERE ⚠️ ---
         const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/kz9inb66atkv9ohtn2hlvwzjeul19swh";
 
         let scene, camera, renderer, bricksData = [], currentStep = 0, spawnedBricks = [];
@@ -108,7 +108,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: promptText })
                 });
-                const data = await response.json();
+                
+                // Secure cleanup layer in case raw strings bypass cloud parsers
+                let rawText = await response.text();
+                rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+                const data = JSON.parse(rawText);
+                
                 bricksData = data.bricks || [];
                 currentStep = bricksData.length > 0 ? 1 : 0;
                 renderCurrentSteps();
@@ -186,10 +191,5 @@
         }
 
         function nextStep() { if(currentStep < bricksData.length) { currentStep++; renderCurrentSteps(); } }
-        function prevStep() { if(currentStep > 1) { currentStep--; renderCurrentSteps(); } }
 
-        init3D();
-    </script>
-</body>
-</html>
 

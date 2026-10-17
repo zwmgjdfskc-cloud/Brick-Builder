@@ -192,4 +192,8 @@
                 document.getElementById('part-info').innerText = `Current Part: ${cur.width}x${cur.depth} ${cur.type.toUpperCase()}`;
             }
         }
+        function nextStep() { if(currentStep < bricksData.length) { currentStep++; renderCurrentSteps(); } }
+        function prevStep() { if(currentStep > 1) { currentStep--; renderCurrentSteps(); } }
+
+        window.onload = init3D;
 

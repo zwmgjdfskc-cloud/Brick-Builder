@@ -54,13 +54,14 @@
     <div id="canvas-container"></div>
 
     <script>
-        // --- ⚠️ MAKE SURE YOUR WEBHOOK URL IS CORRECT HERE ⚠️ ---
         const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/kz9inb66atkv9ohtn2hlvwzjeul19swh";
 
         let scene, camera, renderer, bricksData = [], currentStep = 0, spawnedBricks = [];
 
         function init3D() {
             const container = document.getElementById('canvas-container');
+            if (!container) return;
+            
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x111111);
 
@@ -109,8 +110,8 @@
                     body: JSON.stringify({ prompt: promptText })
                 });
                 
-                // Secure cleanup layer in case raw strings bypass cloud parsers
                 let rawText = await response.text();
+                // Secure text filtering pattern to handle potential markdown wrap drops
                 rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
                 const data = JSON.parse(rawText);
                 
@@ -178,6 +179,7 @@
 
             for(let i = 0; i < currentStep; i++) {
                 const b = bricksData[i];
+                if (!b) continue;
                 const mesh = createCustomBrick(b.width || 2, b.depth || 4, b.type === "plate", b.x, b.y, b.z, b.color || "#f4d03f");
                 scene.add(mesh);
                 spawnedBricks.push(mesh);
@@ -189,7 +191,4 @@
                 document.getElementById('part-info').innerText = `Current Part: ${cur.width}x${cur.depth} ${cur.type.toUpperCase()}`;
             }
         }
-
-        function nextStep() { if(currentStep < bricksData.length) { currentStep++; renderCurrentSteps(); } }
-
 

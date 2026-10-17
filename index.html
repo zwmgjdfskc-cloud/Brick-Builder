@@ -1,1 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Interlocking Brick Builder</title>
+    <script async src="https://googlesyndication.com" crossorigin="anonymous"></script>
+    <script src="https://cloudflare.com"></script>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: white; display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 360px; background: #1e1e1e; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.6); z-index: 10; justify-content: space-between; box-sizing: border-box; }
+        #top-content { display: flex; flex-direction: column; gap: 12px; }
+        #canvas-container { flex: 1; position: relative; }
+        h1 { font-size: 22px; color: #f4d03f; margin: 0; letter-spacing: 0.5px; }
+        textarea { width: 100%; height: 110px; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 6px; padding: 12px; box-sizing: border-box; resize: none; font-size: 14px; }
+        button { background: #f4d03f; color: #111; border: none; padding: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 15px; transition: 0.2s; width: 100%; }
+        button:hover { background: #f1c40f; }
+        .ad-container { background: #111; border: 1px dashed #333; border-radius: 6px; padding: 10px; text-align: center; color: #555; font-size: 11px; min-height: 250px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin: 10px 0; }
+        #controls { display: flex; justify-content: space-between; padding-top: 10px; }
+        .nav-btn { background: #3a3a3a; color: white; width: 48%; padding: 12px; }
+        .nav-btn:hover { background: #4a4a4a; }
+        #status { color: #2ecc71; font-size: 13px; text-align: center; font-weight: 500; }
+        #step-counter { text-align: center; font-size: 18px; font-weight: bold; color: #f4d03f; }
+        #part-info { font-size: 12px; color: #aaa; text-align: center; min-height: 16px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div id="top-content">
+            <h1>🧱 Advanced AI Brick Architect</h1>
+            <p style="color: #aaa; font-size: 13px; margin: 0;">Complex blueprints, built structurally stable.</p>
+            <textarea id="prompt" placeholder="Describe a massive build (e.g., 'A red castle towers with an entryway arch')"></textarea>
+            <button id="build-btn" onclick="sendToMake()">Generate Instructions</button>
+            <div id="status">Ready</div>
+        </div>
+
+        <div class="ad-container">
+            <span>Advertisement</span>
+            <ins class="adsbygoogle" style="display:block; min-width:250px; max-width:300px; height:250px" data-ad-client="ca-pub-YOUR_ADSENSE_CLIENT_ID" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
+        <div>
+            <div id="part-info"></div>
+            <div id="step-counter">Step: 0 / 0</div>
+            <div id="controls">
+                <button class="nav-btn" onclick="prevStep()">◀ Back</button>
+                <button class="nav-btn" onclick="nextStep()">Next ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- ⚠️ PASTE YOUR MAKE.COM WEBHOOK URL INSIDE THE QUOTES BELOW ⚠️ ---
+        const MAKE_WEBHOOK_URL = "PASTE_YOUR_MAKE_URL_HERE";
+
+        let scene, camera, renderer, bricksData = [], currentStep = 0, spawnedBricks = [];
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(20, 15, 30);
+            camera.lookAt(0, 4, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sunLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            sunLight.position.set(25, 45, 15);
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0xd9e5ff, 0.4);
+            fillLight.position.set(-25, 20, -15);
+            scene.add(fillLight);
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            scene.rotation.y += 0.0015;
+            renderer.render(scene, camera);
+        }
+
+        async function sendToMake() {
+            const promptText = document.getElementById('prompt').value;
+            if(!promptText) return alert("Describe your structural concept first!");
+            
+            document.getElementById('status').innerText = "AI generating structural math layout...";
+            document.getElementById('build-btn').disabled = true;
+
+            try {
+                const response = await fetch(MAKE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText })
+                });
+                const data = await response.json();
+                bricksData = data.bricks || [];
+                currentStep = bricksData.length > 0 ? 1 : 0;
+                renderCurrentSteps();
+                document.getElementById('status').innerText = "Structure Generated Perfectly!";
+            } catch (err) {
+                document.getElementById('status').innerText = "Error generating structure layout.";
+                console.error(err);
+            }
+            document.getElementById('build-btn').disabled = false;
+        }
+
+        function createCustomBrick(width, depth, isPlate, x, y, z, colorHex) {
+            const unitSize = 0.8; 
+            const height = isPlate ? 0.24 : 0.72; 
+            const brickGroup = new THREE.Group();
+            
+            const plasticMaterial = new THREE.MeshStandardMaterial({ 
+                color: parseInt(colorHex.replace('#','0x')), 
+                roughness: 0.12,
+                metalness: 0.08,
+                clearcoat: 0.4,
+                clearcoatRoughness: 0.1
+            });
+
+            const geometry = new THREE.BoxGeometry(width * unitSize - 0.04, height - 0.02, depth * unitSize - 0.04); 
+            const mainBody = new THREE.Mesh(geometry, plasticMaterial);
+            mainBody.position.y = height / 2;
+            brickGroup.add(mainBody);
+
+            const studRadius = 0.23;
+            const studHeight = 0.12;
+            const studGeo = new THREE.CylinderGeometry(studRadius, studRadius, studHeight, 16);
+            
+            for (let w = 0; w < width; w++) {
+                for (let d = 0; d < depth; d++) {
+                    const stud = new THREE.Mesh(studGeo, plasticMaterial);
+                    const studX = (w - (width - 1) / 2) * unitSize;
+                    const studZ = (d - (depth - 1) / 2) * unitSize;
+                    stud.position.set(studX, height + (studHeight / 2), studZ);
+                    brickGroup.add(stud);
+                }
+            }
+            
+            brickGroup.position.set(
+                x * unitSize + (width * unitSize / 2) - (unitSize / 2),
+                y,
+                z * unitSize + (depth * unitSize / 2) - (unitSize / 2)
+            );
+
+            const geoEdges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1, opacity: 0.15, transparent: true });
+            const wireframe = new THREE.LineSegments(geoEdges, lineMat);
+            wireframe.position.y = height / 2;
+            brickGroup.add(wireframe);
+
+            return brickGroup;
+        }
+
+        function renderCurrentSteps() {
+            spawnedBricks.forEach(b => scene.remove(b));
+            spawnedBricks = [];
+
+            for(let i = 0; i < currentStep; i++) {
+                const b = bricksData[i];
+                const mesh = createCustomBrick(b.width || 2, b.depth || 4, b.type === "plate", b.x, b.y, b.z, b.color || "#f4d03f");
+                scene.add(mesh);
+                spawnedBricks.push(mesh);
+            }
+
+            document.getElementById('step-counter').innerText = `Step: ${currentStep} / ${bricksData.length}`;
+            if(bricksData[currentStep - 1]) {
+                const cur = bricksData[currentStep - 1];
+                document.getElementById('part-info').innerText = `Current Part: ${cur.width}x${cur.depth} ${cur.type.toUpperCase()}`;
+            }
+        }
+
+        function nextStep() { if(currentStep < bricksData.length) { currentStep++; renderCurrentSteps(); } }
+        function prevStep() { if(currentStep > 1) { currentStep--; renderCurrentSteps(); } }
+
+        init3D();
+    </script>
+</body>
+</html>
 
